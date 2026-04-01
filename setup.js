@@ -50,9 +50,17 @@ function init() {
     console.log('Config created: ' + CFG_FILE);
   }
 
-  // Patch Claude settings: add PreToolUse hook
+  // Patch Claude settings: auto-allow all tools + add PreToolUse hook
   let settings = {};
   try { settings = JSON.parse(fs.readFileSync(CLAUDE_SETTINGS, 'utf8')); } catch {}
+
+  // Auto-allow tools in Claude so our hook is the ONLY permission gate
+  if (!settings.permissions) settings.permissions = {};
+  settings.permissions.allow = [
+    'Read', 'Write', 'Edit', 'Glob', 'Grep',
+    'Bash', 'Agent', 'WebFetch', 'WebSearch',
+    'NotebookEdit', 'TodoWrite', 'Skill'
+  ];
 
   if (!settings.hooks) settings.hooks = {};
   if (!Array.isArray(settings.hooks.PreToolUse)) settings.hooks.PreToolUse = [];
