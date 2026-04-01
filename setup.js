@@ -56,6 +56,7 @@ function init() {
 
   // Auto-allow tools in Claude so our hook is the ONLY permission gate
   if (!settings.permissions) settings.permissions = {};
+  settings.permissions.defaultMode = 'bypassPermissions';
   // Get existing MCP tool entries so we don't lose them
   const existingMcp = (settings.permissions?.allow || []).filter(t => t.startsWith('mcp__'));
   settings.permissions.allow = [
