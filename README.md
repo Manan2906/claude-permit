@@ -1,6 +1,6 @@
 # claude-permit
 
-Stop switching back to Claude Code to approve permissions. Get **desktop notifications with Allow/Deny buttons** and **auto-allow trusted folders**.
+Stop switching back to Claude Code to approve permissions. Get **desktop notifications with Allow/Deny buttons** and **auto-allow trusted folders** — all without touching the Claude app.
 
 ## The Problem
 
@@ -10,42 +10,34 @@ Claude Code asks for permission on every tool use. You have to switch to the app
 
 | Feature | How it works |
 |---|---|
-| **Folder auto-allow** | Mark folders as trusted. All tools run without prompts. |
-| **Desktop notification** | A system popup with Allow / Deny. No app-switching. |
-| **Command deny-list** | Block dangerous commands (`rm -rf`, `git push --force`) automatically. |
-| **Audit log** | Optional log of every allow/deny decision. |
+| **Global auto-allow** | Never get prompted again across all projects |
+| **Folder auto-allow** | Mark specific folders as trusted |
+| **Desktop notification** | Allow/Deny popup — no app switching needed |
+| **Command deny-list** | Block dangerous commands automatically |
+| **Audit log** | Optional log of every allow/deny decision |
 
 Works on **Windows**, **macOS**, and **Linux**.
 
-## Install
+---
+
+## Install (One Time Only)
 
 ```bash
-# Option 1: npx (no install)
-npx claude-permit init
-
-# Option 2: global install
-npm i -g claude-permit
-claude-permit init
+git clone https://github.com/Manan2906/claude-permit.git
+cd claude-permit
+node setup.js init
 ```
 
-## Usage
+## Never Be Prompted Again (All Projects, All Folders)
 
 ```bash
-# Auto-allow everything in current folder
-claude-permit allow
-
-# Auto-allow a specific folder
-claude-permit allow /path/to/project
-
-# Block a dangerous command pattern
-claude-permit deny "rm -rf /*"
-
-# Check config
-claude-permit status
-
-# Uninstall
-claude-permit remove
+claude-permit allow "C:/"        # Windows
+claude-permit allow "/"          # Mac / Linux
 ```
+
+That's it. Done forever. Every project, every folder, every new chat — fully automatic.
+
+---
 
 ## How It Works
 
@@ -54,33 +46,61 @@ Claude wants to run a tool
         |
    [PreToolUse hook fires]
         |
-   Is command in deny-list? --YES--> BLOCK
+   Is command in deny-list? --YES--> BLOCK (instant)
         |
        NO
         |
-   Is folder/tool auto-allowed? --YES--> ALLOW (silent)
+   Is folder auto-allowed? --YES--> ALLOW (silent)
         |
        NO
         |
-   Show desktop notification
-     /        \
-  Allow      Deny/Timeout --> BLOCK
-    |
-  ALLOW
+   Show desktop popup
+     /          |          \
+  Allow      Always      Deny/Timeout
+  Once      for Project      |
+    |            |          BLOCK
+  ALLOW    Save folder
+             + ALLOW
 ```
 
-The hook installs into `~/.claude/settings.json` as a `PreToolUse` hook. It reads rules from `~/.claude-permit/config.json`.
+---
+
+## Popup Buttons
+
+When a popup appears it has 3 buttons:
+
+| Button | What it does |
+|---|---|
+| **✓ Allow Once** | Allows this one tool call |
+| **★ Always for Project** | Auto-saves folder — never asks again for this project |
+| **✕ Deny** | Blocks the tool call |
+
+---
+
+## Commands
+
+```bash
+claude-permit init              # Install hook + create config
+claude-permit allow             # Auto-allow current folder
+claude-permit allow "C:/"       # Auto-allow ALL folders (Windows)
+claude-permit allow "/"         # Auto-allow ALL folders (Mac/Linux)
+claude-permit deny "rm -rf *"   # Block a dangerous command pattern
+claude-permit status            # View current config
+claude-permit remove            # Uninstall hook
+```
+
+---
 
 ## Config
 
-After `init`, edit `~/.claude-permit/config.json`:
+Edit `~/.claude-permit/config.json` to customise:
 
 ```json
 {
   "autoAllow": {
     "tools": ["Read", "Glob", "Grep", "TodoWrite"],
     "commands": ["git status", "git diff*", "git log*", "npm test*"],
-    "folders": ["/home/you/projects/my-app"]
+    "folders": ["C:/"]
   },
   "autoDeny": {
     "commands": ["rm -rf /*", "git push --force*"]
@@ -90,7 +110,7 @@ After `init`, edit `~/.claude-permit/config.json`:
     "defaultOnTimeout": "deny"
   },
   "log": {
-    "enabled": true,
+    "enabled": false,
     "path": ""
   }
 }
@@ -98,41 +118,44 @@ After `init`, edit `~/.claude-permit/config.json`:
 
 | Field | Description |
 |---|---|
-| `autoAllow.tools` | Tool names that always pass (e.g., `Read`, `Glob`) |
+| `autoAllow.folders` | Paths where all tools are silently allowed. Use `C:/` for everything. |
+| `autoAllow.tools` | Tool names always allowed everywhere (e.g. `Read`, `Glob`) |
 | `autoAllow.commands` | Bash command glob patterns to auto-allow |
-| `autoAllow.folders` | Absolute paths. Any project inside these folders is auto-allowed. |
 | `autoDeny.commands` | Bash command glob patterns to always block |
-| `notification.timeoutSeconds` | How long the popup stays open |
-| `notification.defaultOnTimeout` | `"deny"` or `"allow"` when popup times out |
-| `log.enabled` | Write every decision to a log file |
-| `log.path` | Log file path (default: `~/.claude-permit/permit.log`) |
+| `notification.timeoutSeconds` | How long popup stays open before auto-denying |
+| `log.enabled` | Log every allow/deny to a file |
 
 ### Pattern syntax
+`*` matches anything. Example: `git diff*` matches `git diff`, `git diff --staged`, etc.
 
-`*` matches anything. Examples:
-- `git diff*` matches `git diff`, `git diff --staged`, etc.
-- `npm run *` matches `npm run dev`, `npm run build`, etc.
+---
 
-## Platform Details
+## Platform Support
 
 | OS | Notification method |
 |---|---|
-| Windows | PowerShell `WScript.Shell.Popup` (built-in, has timeout) |
+| Windows | PowerShell Windows Form (TopMost, themed) |
 | macOS | `osascript` dialog |
 | Linux | `zenity` (GNOME) or `kdialog` (KDE) |
 
+---
+
 ## Safety
 
-- **Fail-open on crash**: If the hook errors out, tools are allowed (Claude keeps working).
-- **Fail-closed on timeout**: If you don't respond to a notification, the tool is denied.
-- Deny-list is checked **before** allow-list. Denies always win.
+- **Deny-list wins** — always checked before allow-list
+- **Timeout = deny** — if you don't respond, tool is blocked
+- **Fail-open on crash** — if hook errors, Claude keeps working
+
+---
 
 ## Uninstall
 
 ```bash
-claude-permit remove          # removes hook, keeps config
-rm -rf ~/.claude-permit       # removes config too
+claude-permit remove        # removes hook, keeps config
+rm -rf ~/.claude-permit     # removes everything
 ```
+
+---
 
 ## License
 
