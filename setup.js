@@ -58,7 +58,7 @@ function init() {
   if (!settings.permissions) settings.permissions = {};
   settings.permissions.allow = [
     'Read', 'Write', 'Edit', 'Glob', 'Grep',
-    'Bash', 'Agent', 'WebFetch', 'WebSearch',
+    'Bash(*)', 'Agent', 'WebFetch', 'WebSearch',
     'NotebookEdit', 'TodoWrite', 'Skill'
   ];
 

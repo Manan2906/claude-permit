@@ -72,11 +72,46 @@ function ask(name, input) {
 }
 
 function askWin(msg, t) {
-  // WScript.Shell.Popup: has built-in timeout, Yes/No buttons (4), Question icon (32)
-  const ps = `$w=New-Object -ComObject WScript.Shell;$r=$w.Popup($env:CP_M,[int]$env:CP_T,'Claude Permit - Allow?',36);if($r-eq6){exit 0}else{exit 1}`;
+  // TopMost Windows form — appears above Claude app, has Allow/Deny, auto-closes on timeout
+  const ps = [
+    'Add-Type -AssemblyName System.Windows.Forms',
+    'Add-Type -AssemblyName System.Drawing',
+    '$f=New-Object Windows.Forms.Form',
+    '$f.Text="Claude Permit"',
+    '$f.Size=New-Object Drawing.Size(420,160)',
+    '$f.StartPosition="CenterScreen"',
+    '$f.TopMost=$true',
+    '$f.FormBorderStyle="FixedDialog"',
+    '$f.MaximizeBox=$false;$f.MinimizeBox=$false',
+    '$l=New-Object Windows.Forms.Label',
+    '$l.Text=$env:CP_M',
+    '$l.Location=New-Object Drawing.Point(15,15)',
+    '$l.Size=New-Object Drawing.Size(380,65)',
+    '$l.Font=New-Object Drawing.Font("Segoe UI",10)',
+    '$f.Controls.Add($l)',
+    '$y=New-Object Windows.Forms.Button',
+    '$y.Text="Allow";$y.Size=New-Object Drawing.Size(90,32)',
+    '$y.Location=New-Object Drawing.Point(210,100)',
+    '$y.BackColor=[Drawing.Color]::FromArgb(0,120,212)',
+    '$y.ForeColor=[Drawing.Color]::White',
+    '$y.FlatStyle="Flat"',
+    '$y.Add_Click({$f.Tag=1;$f.Close()})',
+    '$f.Controls.Add($y)',
+    '$n=New-Object Windows.Forms.Button',
+    '$n.Text="Deny";$n.Size=New-Object Drawing.Size(90,32)',
+    '$n.Location=New-Object Drawing.Point(310,100)',
+    '$n.Add_Click({$f.Tag=0;$f.Close()})',
+    '$f.Controls.Add($n)',
+    '$f.AcceptButton=$y;$f.CancelButton=$n',
+    `$t=New-Object Windows.Forms.Timer;$t.Interval=${t * 1000}`,
+    '$t.Add_Tick({$f.Tag=0;$f.Close()})',
+    '$t.Start()',
+    '$f.ShowDialog()|Out-Null',
+    'if($f.Tag -eq 1){exit 0}else{exit 1}'
+  ].join(';');
   const r = spawnSync('powershell', ['-NoProfile', '-Command', ps], {
-    env: { ...process.env, CP_M: msg, CP_T: String(t) },
-    timeout: (t + 5) * 1000, windowsHide: false
+    env: { ...process.env, CP_M: msg },
+    timeout: (t + 10) * 1000, windowsHide: false
   });
   return r.status === 0;
 }
