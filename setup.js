@@ -72,10 +72,11 @@ function init() {
     h => !(h.command || '').includes('claude-permit')
   );
 
-  // Add hook (forward slashes, quoted for spaces)
+  // Use full node path so Claude desktop app can find it regardless of PATH
+  const nodePath = process.execPath.replace(/\\/g, '/');
   settings.hooks.PreToolUse.push({
     matcher: '',
-    command: 'node "' + HOOK_DEST.replace(/\\/g, '/') + '"'
+    command: '"' + nodePath + '" "' + HOOK_DEST.replace(/\\/g, '/') + '"'
   });
 
   fs.writeFileSync(CLAUDE_SETTINGS, JSON.stringify(settings, null, 2));
