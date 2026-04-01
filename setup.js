@@ -59,8 +59,8 @@ function init() {
   // Get existing MCP tool entries so we don't lose them
   const existingMcp = (settings.permissions?.allow || []).filter(t => t.startsWith('mcp__'));
   settings.permissions.allow = [
-    'Bash', 'Read', 'Write', 'Edit', 'Glob', 'Grep',
-    'Agent', 'WebFetch', 'WebSearch', 'NotebookEdit', 'TodoWrite', 'Skill',
+    'Bash', 'PowerShell', 'Read', 'Write', 'Edit', 'Glob', 'Grep',
+    'Agent', 'WebFetch', 'WebSearch', 'NotebookEdit', 'TodoWrite', 'Skill', 'ExitPlanMode',
     ...existingMcp
   ];
 
