@@ -72,40 +72,89 @@ function ask(name, input) {
 }
 
 function askWin(msg, t) {
-  // TopMost Windows form — appears above Claude app, has Allow/Deny, auto-closes on timeout
+  // Claude-themed TopMost form — dark bg, orange Allow, subtle Deny, auto-closes on timeout
   const ps = [
     'Add-Type -AssemblyName System.Windows.Forms',
     'Add-Type -AssemblyName System.Drawing',
+
+    // — Form —
     '$f=New-Object Windows.Forms.Form',
     '$f.Text="Claude Permit"',
-    '$f.Size=New-Object Drawing.Size(420,210)',
+    '$f.Size=New-Object Drawing.Size(440,230)',
     '$f.StartPosition="CenterScreen"',
     '$f.TopMost=$true',
     '$f.FormBorderStyle="FixedDialog"',
     '$f.MaximizeBox=$false;$f.MinimizeBox=$false',
+    '$f.BackColor=[Drawing.Color]::FromArgb(24,24,27)',   // dark zinc
+
+    // — Icon strip (left accent bar) —
+    '$bar=New-Object Windows.Forms.Panel',
+    '$bar.Size=New-Object Drawing.Size(4,230)',
+    '$bar.Location=New-Object Drawing.Point(0,0)',
+    '$bar.BackColor=[Drawing.Color]::FromArgb(217,119,6)', // Claude orange
+    '$f.Controls.Add($bar)',
+
+    // — Title label —
+    '$title=New-Object Windows.Forms.Label',
+    '$title.Text="Claude needs permission"',
+    '$title.Location=New-Object Drawing.Point(20,18)',
+    '$title.Size=New-Object Drawing.Size(390,22)',
+    '$title.Font=New-Object Drawing.Font("Segoe UI Semibold",11,[Drawing.FontStyle]::Bold)',
+    '$title.ForeColor=[Drawing.Color]::FromArgb(250,250,250)',
+    '$title.BackColor=[Drawing.Color]::Transparent',
+    '$f.Controls.Add($title)',
+
+    // — Detail label —
     '$l=New-Object Windows.Forms.Label',
     '$l.Text=$env:CP_M',
-    '$l.Location=New-Object Drawing.Point(15,15)',
-    '$l.Size=New-Object Drawing.Size(380,65)',
-    '$l.Font=New-Object Drawing.Font("Segoe UI",10)',
+    '$l.Location=New-Object Drawing.Point(20,48)',
+    '$l.Size=New-Object Drawing.Size(395,70)',
+    '$l.Font=New-Object Drawing.Font("Segoe UI",9)',
+    '$l.ForeColor=[Drawing.Color]::FromArgb(161,161,170)', // zinc-400
+    '$l.BackColor=[Drawing.Color]::Transparent',
     '$f.Controls.Add($l)',
+
+    // — Divider —
+    '$div=New-Object Windows.Forms.Panel',
+    '$div.Size=New-Object Drawing.Size(440,1)',
+    '$div.Location=New-Object Drawing.Point(0,128)',
+    '$div.BackColor=[Drawing.Color]::FromArgb(39,39,42)',
+    '$f.Controls.Add($div)',
+
+    // — Allow button (Claude orange) —
     '$y=New-Object Windows.Forms.Button',
-    '$y.Text="Allow";$y.Size=New-Object Drawing.Size(90,32)',
-    '$y.Location=New-Object Drawing.Point(210,145)',
-    '$y.BackColor=[Drawing.Color]::FromArgb(0,120,212)',
+    '$y.Text="✓  Allow"',
+    '$y.Size=New-Object Drawing.Size(110,36)',
+    '$y.Location=New-Object Drawing.Point(200,155)',
+    '$y.BackColor=[Drawing.Color]::FromArgb(217,119,6)',
     '$y.ForeColor=[Drawing.Color]::White',
     '$y.FlatStyle="Flat"',
+    '$y.Font=New-Object Drawing.Font("Segoe UI",9,[Drawing.FontStyle]::Bold)',
+    '$y.FlatAppearance.BorderSize=0',
     '$y.Add_Click({$f.Tag=1;$f.Close()})',
     '$f.Controls.Add($y)',
+
+    // — Deny button (muted) —
     '$n=New-Object Windows.Forms.Button',
-    '$n.Text="Deny";$n.Size=New-Object Drawing.Size(90,32)',
-    '$n.Location=New-Object Drawing.Point(310,145)',
+    '$n.Text="✕  Deny"',
+    '$n.Size=New-Object Drawing.Size(110,36)',
+    '$n.Location=New-Object Drawing.Point(320,155)',
+    '$n.BackColor=[Drawing.Color]::FromArgb(39,39,42)',
+    '$n.ForeColor=[Drawing.Color]::FromArgb(161,161,170)',
+    '$n.FlatStyle="Flat"',
+    '$n.Font=New-Object Drawing.Font("Segoe UI",9)',
+    '$n.FlatAppearance.BorderSize=1',
+    '$n.FlatAppearance.BorderColor=[Drawing.Color]::FromArgb(63,63,70)',
     '$n.Add_Click({$f.Tag=0;$f.Close()})',
     '$f.Controls.Add($n)',
+
     '$f.AcceptButton=$y;$f.CancelButton=$n',
-    `$t=New-Object Windows.Forms.Timer;$t.Interval=${t * 1000}`,
-    '$t.Add_Tick({$f.Tag=0;$f.Close()})',
-    '$t.Start()',
+
+    // — Timeout timer —
+    `$tmr=New-Object Windows.Forms.Timer;$tmr.Interval=${t * 1000}`,
+    '$tmr.Add_Tick({$f.Tag=0;$f.Close()})',
+    '$tmr.Start()',
+
     '$f.ShowDialog()|Out-Null',
     'if($f.Tag -eq 1){exit 0}else{exit 1}'
   ].join(';');
