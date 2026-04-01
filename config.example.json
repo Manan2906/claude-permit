@@ -1,0 +1,18 @@
+{
+  "autoAllow": {
+    "tools": ["Read", "Glob", "Grep", "TodoWrite"],
+    "commands": ["git status", "git diff*", "git log*", "npm test*", "npm run lint*"],
+    "folders": []
+  },
+  "autoDeny": {
+    "commands": ["rm -rf /*", "git push --force*", "DROP TABLE*"]
+  },
+  "notification": {
+    "timeoutSeconds": 30,
+    "defaultOnTimeout": "deny"
+  },
+  "log": {
+    "enabled": false,
+    "path": ""
+  }
+}

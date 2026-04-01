@@ -1,0 +1,10 @@
+{
+  "name": "claude-permit",
+  "version": "1.0.0",
+  "description": "Desktop notifications & folder auto-allow for Claude Code permissions",
+  "bin": { "claude-permit": "./setup.js" },
+  "files": ["setup.js", "hook.js", "config.example.json", "README.md", "LICENSE"],
+  "keywords": ["claude", "claude-code", "permissions", "notifications", "developer-tools"],
+  "license": "MIT",
+  "engines": { "node": ">=16" }
+}
