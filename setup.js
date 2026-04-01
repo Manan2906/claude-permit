@@ -56,10 +56,12 @@ function init() {
 
   // Auto-allow tools in Claude so our hook is the ONLY permission gate
   if (!settings.permissions) settings.permissions = {};
+  // Get existing MCP tool entries so we don't lose them
+  const existingMcp = (settings.permissions?.allow || []).filter(t => t.startsWith('mcp__'));
   settings.permissions.allow = [
-    'Read', 'Write', 'Edit', 'Glob', 'Grep',
-    'Bash(*)', 'Agent', 'WebFetch', 'WebSearch',
-    'NotebookEdit', 'TodoWrite', 'Skill'
+    'Bash', 'Read', 'Write', 'Edit', 'Glob', 'Grep',
+    'Agent', 'WebFetch', 'WebSearch', 'NotebookEdit', 'TodoWrite', 'Skill',
+    ...existingMcp
   ];
 
   if (!settings.hooks) settings.hooks = {};
