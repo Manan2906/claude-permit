@@ -105,6 +105,12 @@ function allow(folder) {
   }
   config.autoAllow.folders.push(folder);
   saveConfig(config);
+
+  // Also create .claude/settings.json in folder so desktop app skips permission prompt
+  const claudeDir = path.join(folder, '.claude');
+  const claudeSettings = path.join(claudeDir, 'settings.json');
+  fs.mkdirSync(claudeDir, { recursive: true });
+  fs.writeFileSync(claudeSettings, JSON.stringify({ permissions: { defaultMode: 'bypassPermissions' } }, null, 2));
   console.log('Auto-allow added: ' + folder);
 }
 
